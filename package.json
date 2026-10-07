@@ -1,0 +1,34 @@
+{
+  "name": "google-maps-scraper",
+  "version": "1.0.0",
+  "description": "Powerful Google Maps Scraper with Keyword Search and CSV Export",
+  "main": "src/server/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node src/server/index.js",
+    "cli": "node src/cli/index.js"
+  },
+  "keywords": [
+    "google-maps",
+    "scraper",
+    "csv-export",
+    "playwright",
+    "lead-generation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "lucide-react": "^0.474.0",
+    "playwright": "^1.50.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}
