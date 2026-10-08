@@ -85,6 +85,19 @@ body {
   overflow-x: hidden;
 }
 
+.backend-notice {
+  margin: -1rem 0 1.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, 0.08);
+  color: #fde68a;
+}
+
+.backend-notice code {
+  color: var(--text-main);
+}
+
 /* Header */
 .app-header {
   position: sticky;

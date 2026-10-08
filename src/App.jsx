@@ -6,6 +6,11 @@ import AnalyticsCards from './components/AnalyticsCards';
 import ResultsTable from './components/ResultsTable';
 import ExportModal from './components/ExportModal';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '')
+  || (import.meta.env.DEV ? '' : null);
+
+const apiUrl = (path) => `${API_BASE_URL}/api/${path}`;
+
 export default function App() {
   const [results, setResults] = useState([]);
   const [isScraping, setIsScraping] = useState(false);
@@ -16,17 +21,28 @@ export default function App() {
 
   // Fetch initial results & listen to SSE real-time stream
   useEffect(() => {
+    if (!API_BASE_URL) {
+      return undefined;
+    }
+
     // Initial fetch of any existing results
-    fetch('/api/results')
-      .then(res => res.json())
+    fetch(apiUrl('results'))
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`API returned ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         if (data.data) setResults(data.data);
         if (typeof data.isScraping === 'boolean') setIsScraping(data.isScraping);
       })
-      .catch(() => {});
+      .catch(err => {
+        setLogs(prev => [...prev, { message: `Backend unavailable: ${err.message}`, level: 'error' }]);
+      });
 
     // Establish SSE stream
-    const eventSource = new EventSource('/api/scrape/stream');
+    const eventSource = new EventSource(apiUrl('scrape/stream'));
 
     eventSource.onmessage = (event) => {
       try {
@@ -67,6 +83,11 @@ export default function App() {
       }
     };
 
+    eventSource.onerror = () => {
+      eventSource.close();
+      setLogs(prev => [...prev, { message: 'Lost connection to the scraper backend.', level: 'error' }]);
+    };
+
     return () => {
       eventSource.close();
     };
@@ -80,7 +101,11 @@ export default function App() {
       setProgressPercent(0);
       setIsScraping(true);
 
-      const res = await fetch('/api/scrape', {
+      if (!API_BASE_URL) {
+        throw new Error('Scraping requires a deployed API. Set the VITE_API_BASE_URL GitHub Actions repository variable and redeploy.');
+      }
+
+      const res = await fetch(apiUrl('scrape'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
@@ -98,24 +123,37 @@ export default function App() {
 
   const handleStopScrape = async () => {
     try {
-      await fetch('/api/stop', { method: 'POST' });
+      if (!API_BASE_URL) {
+        throw new Error('Scraper API is not configured.');
+      }
+      await fetch(apiUrl('stop'), { method: 'POST' });
       setLogs(prev => [...prev, { message: 'Sending stop request...', level: 'warn' }]);
     } catch (err) {
-      console.error(err);
+      setLogs(prev => [...prev, { message: `❌ ${err.message}`, level: 'error' }]);
     }
   };
 
   const handleClearData = async () => {
     try {
-      await fetch('/api/clear', { method: 'POST' });
+      if (!API_BASE_URL) {
+        throw new Error('Scraper API is not configured.');
+      }
+      const res = await fetch(apiUrl('clear'), { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(`Failed to clear results (HTTP ${res.status}).`);
+      }
       setResults([]);
     } catch (err) {
-      console.error(err);
+      setLogs(prev => [...prev, { message: `❌ ${err.message}`, level: 'error' }]);
     }
   };
 
   const handleExportCsv = (selectedFields = null) => {
-    let url = '/api/export/csv';
+    if (!API_BASE_URL) {
+      setLogs(prev => [...prev, { message: '❌ Scraper API is not configured.', level: 'error' }]);
+      return;
+    }
+    let url = apiUrl('export/csv');
     if (selectedFields && Array.isArray(selectedFields)) {
       url += `?fields=${encodeURIComponent(selectedFields.join(','))}`;
     }
@@ -123,12 +161,23 @@ export default function App() {
   };
 
   const handleExportJson = () => {
-    window.location.href = '/api/export/json';
+    if (!API_BASE_URL) {
+      setLogs(prev => [...prev, { message: '❌ Scraper API is not configured.', level: 'error' }]);
+      return;
+    }
+    window.location.href = apiUrl('export/json');
   };
 
   return (
     <div className="app-container">
       <Header isScraping={isScraping} totalItems={results.length} />
+
+      {!API_BASE_URL && (
+        <div className="backend-notice" role="status">
+          GitHub Pages hosts this dashboard only. To enable scraping, deploy the API and set the
+          <code> VITE_API_BASE_URL </code> GitHub Actions repository variable to its HTTPS URL, then redeploy.
+        </div>
+      )}
 
       <div className="dashboard-grid">
         {/* Left Column: Form Controls & Live Monitor */}
