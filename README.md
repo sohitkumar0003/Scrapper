@@ -42,19 +42,7 @@ Open your browser and navigate to `http://localhost:3000`.
 
 ---
 
-### 2. GitHub Pages
-
-The GitHub Actions workflow builds and deploys the dashboard to GitHub Pages when changes are pushed to `main`.
-In the repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions**.
-
-GitHub Pages hosts only the static dashboard; it cannot run the Express/Playwright scraper. To enable scraping
-from the published site, deploy the API separately over HTTPS and add a repository Actions variable named
-`VITE_API_BASE_URL` containing the API origin (for example, `https://api.example.com`). The workflow reads this
-variable during the build. Without it, the dashboard loads but displays that the scraper backend is not configured.
-
----
-
-### 3. Command Line Interface (CLI)
+### 2. Command Line Interface (CLI)
 
 You can also run scrapes directly from your command prompt or terminal:
 
