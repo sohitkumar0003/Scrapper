@@ -47,18 +47,10 @@ Open your browser and navigate to `http://localhost:3000`.
 The GitHub Actions workflow builds and deploys the dashboard to GitHub Pages when changes are pushed to `main`.
 In the repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions**.
 
-GitHub Pages hosts only the static dashboard; it cannot run the Express/Playwright scraper. To deploy the API on
-Render:
-
-1. Create a Render Blueprint from this repository. Render reads `render.yaml` and builds the scraper API container.
-2. Copy the HTTPS URL assigned to the `scrapper-api` web service.
-3. In GitHub, open **Settings → Secrets and variables → Actions → Variables** and create
-   `VITE_API_BASE_URL` with that API URL (origin only, with no trailing slash).
-4. Run the **Deploy to GitHub Pages** workflow from the Actions tab to rebuild the dashboard with the API URL.
-
-The Render service restricts browser API access to this repository's GitHub Pages origin. Update `CORS_ORIGINS` in
-Render if you use the UI from another origin. The service stores results in memory, so results are cleared when
-Render restarts it; free services may also take time to wake after inactivity.
+GitHub Pages hosts only the static dashboard; it cannot run the Express/Playwright scraper. To enable scraping
+from the published site, deploy the API separately over HTTPS and add a repository Actions variable named
+`VITE_API_BASE_URL` containing the API origin (for example, `https://api.example.com`). The workflow reads this
+variable during the build. Without it, the dashboard loads but displays that the scraper backend is not configured.
 
 ---
 
