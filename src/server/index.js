@@ -6,8 +6,12 @@ const { convertToCSV } = require('../scraper/csvExporter');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const corsOrigins = process.env.CORS_ORIGINS
+  ?.split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
-app.use(cors());
+app.use(cors(corsOrigins?.length ? { origin: corsOrigins } : undefined));
 app.use(express.json());
 
 // Global state for active scraping job and stored results
@@ -30,7 +34,6 @@ app.get('/api/scrape/stream', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
 
   const clientId = Date.now();
@@ -43,6 +46,10 @@ app.get('/api/scrape/stream', (req, res) => {
   req.on('close', () => {
     sseClients = sseClients.filter(c => c.id !== clientId);
   });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 // Start Scraping API
